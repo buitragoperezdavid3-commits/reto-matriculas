@@ -104,11 +104,13 @@ function actualizarStats(){
       .sort((a,b)=>b[1]-a[1]);
 
     document.getElementById("ranking").innerHTML =
-      ordenado.map((r,i)=>
-        `<div class="item"><span>#${i+1} ${r[0]}</span><strong>${r[1]}</strong></div>`
-      ).join("");
 
-  });
+     const lista = Object.keys(data).sort();
+
+document.getElementById("listaMatriculas").innerHTML =
+  lista.map(numero =>
+    `<div class="item"><span>${numero}</span></div>`
+  ).join("");
 }
 
 actualizarStats();
@@ -226,6 +228,16 @@ Completado:
 <h2>🏆 Ranking</h2>
 
 <div id="ranking"></div>
+
+</div>
+
+<div class="card">
+
+<h2>📋 Matrículas encontradas</h2>
+
+<div id="listaMatriculas"></div>
+
+</div>
 
 </div>
 
