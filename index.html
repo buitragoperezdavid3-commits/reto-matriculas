@@ -1,0 +1,236 @@
+html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reto Matrículas</title>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  set,
+  get,
+  child,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB7WvXqkgvsLPQhzyR_PQ2Iifug4Lds_5w",
+  authDomain: "retro-matriculas.firebaseapp.com",
+  databaseURL: "https://retro-matriculas-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "retro-matriculas",
+  storageBucket: "retro-matriculas.firebasestorage.app",
+  messagingSenderId: "657033367104",
+  appId: "1:657033367104:web:ce1c5701fab63a94ed19a5",
+  measurementId: "G-QD1YGSRTTM"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window.buscar = async function(){
+
+  const valor = document.getElementById("matricula").value;
+
+  if(valor === "") return;
+
+  const numero = valor.toString().padStart(4,"0");
+
+  const snapshot = await get(child(ref(db), "matriculas/" + numero));
+
+  document.getElementById("resultado").style.display = "block";
+
+  if(snapshot.exists()){
+
+    const data = snapshot.val();
+
+    document.getElementById("estado").innerHTML =
+      "✅ Ya encontrada por <strong>" + data.usuario + "</strong>";
+
+  } else {
+
+    document.getElementById("estado").innerHTML =
+      "❌ Todavía no encontrada";
+
+  }
+
+  window.numeroActual = numero;
+}
+
+window.guardar = async function(){
+
+  if(!window.numeroActual) return;
+
+  const usuario =
+    document.getElementById("usuario").value || "Anónimo";
+
+  await set(ref(db, "matriculas/" + window.numeroActual), {
+    usuario,
+    fecha: new Date().toLocaleString()
+  });
+
+  buscar();
+}
+
+function actualizarStats(){
+
+  const matriculasRef = ref(db, "matriculas");
+
+  onValue(matriculasRef, (snapshot) => {
+
+    const data = snapshot.val() || {};
+
+    const total = Object.keys(data).length;
+
+    document.getElementById("contador").innerText = total;
+
+    const porcentaje = ((total / 10000) * 100).toFixed(2);
+
+    document.getElementById("porcentaje").innerText = porcentaje + "%";
+
+    document.getElementById("barra").style.width = porcentaje + "%";
+
+    const ranking = {};
+
+    Object.values(data).forEach(item => {
+      ranking[item.usuario] = (ranking[item.usuario] || 0) + 1;
+    });
+
+    const ordenado = Object.entries(ranking)
+      .sort((a,b)=>b[1]-a[1]);
+
+    document.getElementById("ranking").innerHTML =
+      ordenado.map((r,i)=>
+        `<div class="item"><span>#${i+1} ${r[0]}</span><strong>${r[1]}</strong></div>`
+      ).join("");
+
+  });
+}
+
+actualizarStats();
+
+</script>
+
+<style>
+body{
+  margin:0;
+  background:#0f172a;
+  color:white;
+  font-family:Arial,sans-serif;
+}
+
+.container{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+.card{
+  background:#111827;
+  border-radius:20px;
+  padding:20px;
+  margin-top:20px;
+}
+
+input,button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  margin-top:10px;
+  font-size:16px;
+  box-sizing:border-box;
+}
+
+button{
+  background:#22c55e;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.progress{
+  height:18px;
+  background:#1f2937;
+  border-radius:999px;
+  overflow:hidden;
+  margin-top:15px;
+}
+
+.bar{
+  height:100%;
+  width:0%;
+  background:#22c55e;
+}
+
+.item{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid #1f2937;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>🚗 Reto Matrículas</h1>
+
+<div class="card">
+
+<h2>Buscar matrícula</h2>
+
+<input id="matricula" type="number" placeholder="Ej: 4827">
+
+<button onclick="buscar()">Buscar</button>
+
+<div id="resultado" style="display:none; margin-top:20px;">
+
+<p id="estado"></p>
+
+<input id="usuario" placeholder="Tu nombre">
+
+<button onclick="guardar()">Guardar matrícula</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>📊 Progreso</h2>
+
+<p>
+Encontradas:
+<strong id="contador">0</strong>/10000
+</p>
+
+<p>
+Completado:
+<strong id="porcentaje">0%</strong>
+</p>
+
+<div class="progress">
+<div class="bar" id="barra"></div>
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>🏆 Ranking</h2>
+
+<div id="ranking"></div>
+
+</div>
+
+</div>
+
+</body>
+</html>
+
