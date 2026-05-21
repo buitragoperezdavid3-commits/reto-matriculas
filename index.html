@@ -103,14 +103,20 @@ function actualizarStats(){
     const ordenado = Object.entries(ranking)
       .sort((a,b)=>b[1]-a[1]);
 
-    document.getElementById("ranking").innerHTML =
+   document.getElementById("ranking").innerHTML =
+  ordenado.map((r,i)=>
+    `<div class="item"><span>#${i+1} ${r[0]}</span><strong>${r[1]}</strong></div>`
+  ).join("");
 
-     const lista = Object.keys(data).sort();
+const lista = Object.keys(data).sort();
 
 document.getElementById("listaMatriculas").innerHTML =
   lista.map(numero =>
     `<div class="item"><span>${numero}</span></div>`
   ).join("");
+
+  });
+
 }
 
 actualizarStats();
