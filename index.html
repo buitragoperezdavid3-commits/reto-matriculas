@@ -61,12 +61,32 @@ window.buscar = async function(){
   window.numeroActual = numero;
 }
 
+window.eliminar = async function(){
+
+  if(!window.numeroActual) return;
+
+  await set(ref(db, "matriculas/" + window.numeroActual), null);
+
+  document.getElementById("estado").innerHTML =
+    "❌ Matrícula eliminada";
+
+}
+
 window.guardar = async function(){
 
   if(!window.numeroActual) return;
 
   const usuario =
     document.getElementById("usuario").value || "Anónimo";
+
+const existe = await get(child(ref(db), "matriculas/" + window.numeroActual));
+
+if(existe.exists()){
+
+  alert("⚠️ Esa matrícula ya estaba registrada");
+
+  return;
+}
 
   await set(ref(db, "matriculas/" + window.numeroActual), {
     usuario,
@@ -103,7 +123,7 @@ function actualizarStats(){
     const ordenado = Object.entries(ranking)
       .sort((a,b)=>b[1]-a[1]);
 
-   document.getElementById("ranking").innerHTML =
+ document.getElementById("ranking").innerHTML =
   ordenado.map((r,i)=>
     `<div class="item"><span>#${i+1} ${r[0]}</span><strong>${r[1]}</strong></div>`
   ).join("");
@@ -115,10 +135,72 @@ document.getElementById("listaMatriculas").innerHTML =
     `<div class="item"><span>${numero}</span></div>`
   ).join("");
 
+let htmlBloques = "";
+
+for(let i=0;i<10;i++){
+
+  const inicio = i * 1000;
+  const fin = inicio + 999;
+
+  let contador = 0;
+
+  lista.forEach(num => {
+
+    const n = parseInt(num);
+
+    if(n >= inicio && n <= fin){
+      contador++;
+    }
+
   });
+
+  const porcentajeBloque =
+    ((contador / 1000) * 100).toFixed(1);
+
+  htmlBloques += `
+    <div class="item">
+      <span>${inicio.toString().padStart(4,"0")} - ${fin.toString().padStart(4,"0")}</span>
+      <strong>${contador}/1000 (${porcentajeBloque}%)</strong>
+    </div>
+  `;
+}
+
+document.getElementById("bloques").innerHTML =
+  htmlBloques;
+
+for(let i=0;i<10;i++){
+
+  const inicio = i * 1000;
+  const fin = inicio + 999;
+
+  let contador = 0;
+
+  lista.forEach(num => {
+
+    const n = parseInt(num);
+
+    if(n >= inicio && n <= fin){
+      contador++;
+    }
+
+  });
+
+  if(contador < 1000){
+
+    document.getElementById("objetivoActual").innerHTML =
+      "🎯 Objetivo actual: " +
+      inicio.toString().padStart(4,"0") +
+      " - " +
+      fin.toString().padStart(4,"0");
+
+  break;
+  }
 
 }
 
+  });
+
+}
 actualizarStats();
 
 </script>
@@ -189,6 +271,8 @@ button{
 
 <h1>🚗 Reto Matrículas</h1>
 
+<p id="objetivoActual"></p>
+
 <div class="card">
 
 <h2>Buscar matrícula</h2>
@@ -204,6 +288,10 @@ button{
 <input id="usuario" placeholder="Tu nombre">
 
 <button onclick="guardar()">Guardar matrícula</button>
+
+<button onclick="eliminar()" style="background:#ef4444;">
+❌ Eliminar matrícula
+</button>
 
 </div>
 
@@ -242,6 +330,16 @@ Completado:
 <h2>📋 Matrículas encontradas</h2>
 
 <div id="listaMatriculas"></div>
+
+</div>
+
+<div class="card">
+
+<h2>📦 Progreso por bloques</h2>
+
+<div id="bloques"></div>
+
+</div>
 
 </div>
 
